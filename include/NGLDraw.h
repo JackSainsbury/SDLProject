@@ -5,6 +5,9 @@
 #include <ngl/Light.h>
 #include <SDL.h>
 
+#include "Entity.h"
+#include "MapHandler.h"
+
 class NGLDraw
 {
   public :
@@ -46,11 +49,16 @@ class NGLDraw
     /// @param _event the SDL mouse event structure containing all mouse info
     //----------------------------------------------------------------------------------------------------------------------
     void wheelEvent(const SDL_MouseWheelEvent &_event);
+    //----------------------------------------------------------------------------------------------------------------------
+    /// @brief
+    /// @param
+    //----------------------------------------------------------------------------------------------------------------------
+    void keyPressEvent (const SDL_KeyboardEvent &_event);
   private :
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief method to load transform data to the shaders
     //----------------------------------------------------------------------------------------------------------------------
-    void loadMatricesToShader();
+    void loadMatricesToShader(ngl::Mat4 _trans);
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief used to store the x rotation mouse value
     //----------------------------------------------------------------------------------------------------------------------
@@ -99,6 +107,12 @@ class NGLDraw
     /// @brief a simple light use to illuminate the screen
     //----------------------------------------------------------------------------------------------------------------------
     ngl::Light *m_light;
+    /// @brief My Geometry
+    //----------------------------------------------------------------------------------------------------------------------
+    MapHandler* m_map;
+
+    bool vecHasChangedDebug = true;
+    ngl::Vec2 lastVecForDebug = ngl::Vec2(0,0);
 };
 
 

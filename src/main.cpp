@@ -108,7 +108,7 @@ int main(int argc, char * argv[])
             break;
 
             case SDLK_g : SDL_SetWindowFullscreen(window,SDL_FALSE); break;
-            default : break;
+            default : ngl.keyPressEvent(event.key); break;
           } // end of key process
         } // end of keydown
 
