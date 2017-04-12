@@ -34,6 +34,9 @@ in vec3 halfVector;
 in vec3 eyeDirection;
 in vec3 vPosition;
 
+uniform sampler2D tex;
+in vec2 vertUV;
+
 /// @brief a function to compute point light values
 /// @param[in] _light the number of the current light
 
@@ -75,6 +78,6 @@ return ambient + diffuse + specular;
 void main ()
 {
 
-fragColour=pointLight();
+fragColour=pointLight() * texture(tex,vertUV);
 }
 

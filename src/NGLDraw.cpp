@@ -9,9 +9,9 @@ const static float INCREMENT=0.01;
 const static float ZOOM=0.05;
 NGLDraw::NGLDraw()
 {
-    m_rotate=false;
+    deltaTimeMiliseconds = 0;
     // mouse rotation values set to 0
-    m_spinXFace=0;
+    m_spinXFace=4000;
     m_spinYFace=0;
 
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);			   // Grey Background
@@ -54,7 +54,7 @@ NGLDraw::NGLDraw()
     // Now we will create a basic Camera from the graphics library
     // This is a static camera so it only needs to be set once
     // First create Values for the camera position
-    ngl::Vec3 from(0,2,10);
+    ngl::Vec3 from(0,2,5);
     ngl::Vec3 to(0,0,0);
     ngl::Vec3 up(0,1,0);
 
@@ -76,7 +76,21 @@ NGLDraw::NGLDraw()
     // load these values to the shader as well
     m_light->loadToShader("light");
 
+    //Create a new map and initialize it (init will eventually be transferred to main menu call)
     m_map = new MapHandler("World1",3,8);
+    m_map->InitMap(true,this);
+
+    //Create a new player and initialize it (init will eventually be transferred to main menu call)
+    m_player = new Player();
+    m_player->initPlayer();
+
+    m_player->SetMainMap(m_map);
+
+    OnUpPress = false;
+    OnDownPress = false;
+    OnRightPress = false;
+    OnLeftPress = false;
+
 }
 
 NGLDraw::~NGLDraw()
@@ -98,85 +112,30 @@ void NGLDraw::draw()
     // clear the screen and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Rotation based on the mouse position for our global transform
+    ngl::Mat4 rotX;
+    ngl::Mat4 rotY;
+    // create the rotation matrices
+    rotX.rotateX( m_spinXFace );
+    rotY.rotateY( m_spinYFace );
+    // multiply the rotations
+    m_mouseGlobalTX = rotY * rotX;
+    // add the translations
+    m_mouseGlobalTX.m_m[ 3 ][ 0 ] = m_modelPos.m_x;
+    m_mouseGlobalTX.m_m[ 3 ][ 1 ] = m_modelPos.m_y;
+    m_mouseGlobalTX.m_m[ 3 ][ 2 ] = m_modelPos.m_z;
+
     // grab an instance of the shader manager
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
     (*shader)["Phong"]->use();
 
-    // Rotation based on the mouse position for our global transform
-    ngl::Transformation trans;
-    ngl::Mat4 rotX;
-    ngl::Mat4 rotY;
-    // create the rotation matrices
-    rotX.rotateX(m_spinXFace);
-    rotY.rotateY(m_spinYFace);
-    // multiply the rotations
-    m_mouseGlobalTX=rotY*rotX;
-    // add the translations
-    m_mouseGlobalTX.m_m[3][0] = m_modelPos.m_x;
-    m_mouseGlobalTX.m_m[3][1] = m_modelPos.m_y;
-    m_mouseGlobalTX.m_m[3][2] = m_modelPos.m_z;
-
-    ngl::VAOPrimitives* prim = ngl::VAOPrimitives::instance();
-
-    prim->createSphere("sphere", 1,10);
-    prim->createDisk("disk",1,10);
-
-    for(int i = 0; i<m_map->GetChunkVectorDimension();++i){
-        for(int j = 0; j<m_map->GetChunkVectorDimension();++j){
-            if(vecHasChangedDebug)
-                std::cout<<"| "<<m_map->GetChunk(i, j).GetCurFileName()<< " |";
-
-            for(int chunkBlockX = 0; chunkBlockX<m_map->GetChunkDimension();++chunkBlockX){
-                for(int chunkBlockY = 0; chunkBlockY<m_map->GetChunkDimension();++chunkBlockY){
-                    trans.reset();
-
-
-                    trans.setPosition((i - (m_map->GetChunkVectorDimension())/2)*m_map->GetChunkDimension() + chunkBlockX,1,
-                                      (j - (m_map->GetChunkVectorDimension())/2)*m_map->GetChunkDimension() + chunkBlockY);
-
-
-                    switch(m_map->GetChunk(i,j).GetBlock(chunkBlockX,chunkBlockY)){
-                    case 1:
-                        // draw
-                        loadMatricesToShader(trans.getMatrix());
-                        // draw
-                        prim->draw( "cube" );
-
-                        break;
-                    case 2:
-                        loadMatricesToShader(trans.getMatrix());
-                        // draw
-
-                        prim->draw( "sphere" );
-
-                        break;
-                    case 3:
-                        trans.addRotation(45,45,45);
-                        loadMatricesToShader(trans.getMatrix());
-                        // draw
-                        prim->draw( "disk" );
-                        break;
-
-                    }
-                }
-            }
-        }
-        if(vecHasChangedDebug){
-            std::cout<<std::endl;
-       }
-    }
-    if(vecHasChangedDebug){
-        std::cout<<m_map->currentOfsetVector.m_x<<","<<m_map->currentOfsetVector.m_y<<std::endl;
-        std::cout<<std::endl;
-        vecHasChangedDebug=false;
-    }
+    m_map->DrawMap();
 }
 
 
 void NGLDraw::loadMatricesToShader(ngl::Mat4 _trans)
 {
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-
 
     ngl::Mat4 MV;
     ngl::Mat4 MVP;
@@ -196,83 +155,25 @@ void NGLDraw::loadMatricesToShader(ngl::Mat4 _trans)
 //----------------------------------------------------------------------------------------------------------------------
 void NGLDraw::mouseMoveEvent (const SDL_MouseMotionEvent &_event)
 {
-    if(m_rotate && _event.state &SDL_BUTTON_LMASK)
-    {
-        int diffx=_event.x-m_origX;
-        int diffy=_event.y-m_origY;
-        m_spinXFace += (float) 0.5f * diffy;
-        m_spinYFace += (float) 0.5f * diffx;
-        m_origX = _event.x;
-        m_origY = _event.y;
-        this->draw();
 
-    }
-    // right mouse translate code
-    else if(m_translate && _event.state &SDL_BUTTON_RMASK)
-    {
-        int diffX = (int)(_event.x - m_origXPos);
-        int diffY = (int)(_event.y - m_origYPos);
-        m_origXPos=_event.x;
-        m_origYPos=_event.y;
-        m_modelPos.m_x += INCREMENT * diffX;
-        m_modelPos.m_y -= INCREMENT * diffY;
-        this->draw();
-    }
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-void NGLDraw::keyPressEvent(const SDL_KeyboardEvent &_event)
-{
-    switch( _event.keysym.sym )
-    {
-    // if it's the escape key quit
-    case SDLK_UP : m_map->cyclePushChunks(MapHandlerCycleSpace::North); break;
-    case SDLK_RIGHT : m_map->cyclePushChunks(MapHandlerCycleSpace::East); break;
-    case SDLK_DOWN : m_map->cyclePushChunks(MapHandlerCycleSpace::South); break;
-    case SDLK_LEFT : m_map->cyclePushChunks(MapHandlerCycleSpace::West); break;
-    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 void NGLDraw::mousePressEvent (const SDL_MouseButtonEvent &_event)
 {
-    // this method is called when the mouse button is pressed in this case we
-    // store the value where the maouse was clicked (x,y) and set the Rotate flag to true
-    if(_event.button == SDL_BUTTON_LEFT)
-    {
-        m_origX = _event.x;
-        m_origY = _event.y;
-        m_rotate =true;
-    }
-    // right mouse translate mode
-    else if(_event.button == SDL_BUTTON_RIGHT)
-    {
-        m_origXPos = _event.x;
-        m_origYPos = _event.y;
-        m_translate=true;
-    }
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 void NGLDraw::mouseReleaseEvent (const SDL_MouseButtonEvent &_event)
 {
-    // this event is called when the mouse button is released
-    // we then set Rotate to false
-    if (_event.button == SDL_BUTTON_LEFT)
-    {
-        m_rotate=false;
-    }
-    // right mouse translate mode
-    if (_event.button == SDL_BUTTON_RIGHT)
-    {
-        m_translate=false;
-    }
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 void NGLDraw::wheelEvent(const SDL_MouseWheelEvent &_event)
 {
-
+/*
     // check the diff of the wheel position (0 means no change)
     if(_event.y > 0)
     {
@@ -294,7 +195,53 @@ void NGLDraw::wheelEvent(const SDL_MouseWheelEvent &_event)
     else if(_event.x <0 )
     {
         m_modelPos.m_x+=ZOOM;
-        this->draw();
     }
+*/
 }
 //----------------------------------------------------------------------------------------------------------------------
+
+//  this needs work
+void NGLDraw::getKey(){
+
+    const Uint8* keystate = SDL_GetKeyboardState(NULL);
+
+    if(keystate[SDL_SCANCODE_LEFT]){
+        if(OnLeftPress == false)
+            m_player->ModInputVector(ngl::Vec2(1,0));
+        OnLeftPress = true;
+    }else{
+        if(OnLeftPress == true)
+            m_player->ModInputVector(ngl::Vec2(-1,0));
+        OnLeftPress = false;
+    }
+
+    if(keystate[SDL_SCANCODE_RIGHT]){
+        if(OnRightPress == false)
+            m_player->ModInputVector(ngl::Vec2(-1,0));
+        OnRightPress = true;
+    }else{
+        if(OnRightPress == true)
+            m_player->ModInputVector(ngl::Vec2(1,0));
+        OnRightPress = false;
+    }
+
+    if(keystate[SDL_SCANCODE_UP]){
+        if(OnUpPress == false)
+            m_player->ModInputVector(ngl::Vec2(0,1));
+        OnUpPress = true;
+    }else{
+        if(OnUpPress == true)
+            m_player->ModInputVector(ngl::Vec2(0,-1));
+        OnUpPress = false;
+    }
+
+    if(keystate[SDL_SCANCODE_DOWN]){
+        if(OnDownPress == false)
+            m_player->ModInputVector(ngl::Vec2(0,-1));
+        OnDownPress = true;
+    }else{
+        if(OnDownPress == true)
+            m_player->ModInputVector(ngl::Vec2(0,1));
+        OnDownPress = false;
+    }
+}

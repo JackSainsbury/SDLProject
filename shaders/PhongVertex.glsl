@@ -44,6 +44,8 @@ out vec3 halfVector;
 out vec3 eyeDirection;
 out vec3 vPosition;
 
+out vec2 vertUV;
+
 uniform mat4 MV;
 uniform mat4 MVP;
 uniform mat3 normalMatrix;
@@ -78,5 +80,5 @@ lightDir=vec3(light.position.xyz-eyeCord.xyz);
 dist = length(lightDir);
 lightDir/= dist;
 halfVector = normalize(eyeDirection + lightDir);
-
+vertUV=inUV.st;
 }

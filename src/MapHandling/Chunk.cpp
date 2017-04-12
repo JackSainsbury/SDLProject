@@ -9,10 +9,6 @@ Chunk::Chunk()
 
 }
 
-void Chunk::SetMap(MapHandler *_map){
-    m_map = _map;
-}
-
 //populate should only ever be called when making a new file, so write to file afterwards
 void Chunk::PopulateChunk(){
     // grab an instance of the random generator
@@ -25,9 +21,12 @@ void Chunk::PopulateChunk(){
             if(_weighting < .85)
                 column.push_back(1); //set values to 1 (0 is mined, 1 is filled)
             else if(_weighting < .95)
-                column.push_back(2); //set 2 (ore type 2)
+                column.push_back(2); //set 2 (ore type 1)
+            else if(_weighting < .99)
+                column.push_back(3); //set 3 (ore type 2)
             else
-                column.push_back(3); //set 3 (ore type 1)
+                if(m_map->GetCurrentOfsetVector().m_x > 3 || m_map->GetCurrentOfsetVector().m_x < -3 || m_map->GetCurrentOfsetVector().m_y > 3 || m_map->GetCurrentOfsetVector().m_y < -3)
+                    column.push_back(4); //set 4 (chest(rare))
         }
         BlockVector.push_back(column);
     }

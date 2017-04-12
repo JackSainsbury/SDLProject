@@ -9,8 +9,7 @@ namespace ComponentType{
     enum EnumType
     {
         RigidBody = 0x00000001,
-        Transform = 0x00000002,
-        Geometry = 0x00000003
+        Geometry = 0x00000002
 
     };
 }
