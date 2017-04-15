@@ -9,6 +9,8 @@ layout (location = 1) in vec2 inUV;
 uniform bool Normalize;
 // the eye position of the camera
 uniform vec3 viewerPos;
+
+uniform vec2 screenSizeVector;
 /// @brief the current fragment normal for the vert being processed
 out vec3 fragmentNormal;
 
@@ -44,6 +46,8 @@ out vec3 halfVector;
 out vec3 eyeDirection;
 out vec3 vPosition;
 
+out vec2 ScreenSizeVector;
+
 out vec2 vertUV;
 
 uniform mat4 MV;
@@ -73,6 +77,8 @@ eyeDirection = normalize(viewerPos - worldPosition.xyz);
 vec4 eyeCord=MV*vec4(inVert,1);
 
 vPosition = eyeCord.xyz / eyeCord.w;;
+
+ScreenSizeVector = screenSizeVector;
 
 float dist;
 

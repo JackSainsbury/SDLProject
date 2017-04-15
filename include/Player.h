@@ -6,7 +6,8 @@
 #include "Entity.h"
 #include <ngl/Transformation.h>
 
-class Player : public Entity
+
+class Player
 {
 public:
     Player();
@@ -20,7 +21,12 @@ public:
     inline ngl::Vec2 GetInputVector(){ return m_InputVector; }
     inline float GetPlayerWalkSpeed(){ return playerWalkSpeed; }
 
+    void ManagePlayerInput();
+
+    void DrawPlayer();
+
 private:
+    std::unique_ptr<ngl::Obj> playerObj;
 
     MapHandler *main_map;
     ngl::Vec2 m_InputVector;

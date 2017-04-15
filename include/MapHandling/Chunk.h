@@ -16,7 +16,8 @@ public:
 
     //inline void SetBlock ( int _x, int _y, int _blockID){ BlockVector[_x][_y] = _blockID; }
     inline int GetBlock ( int _x, int _y ) { return BlockVector[_x][_y]; }
-    inline void SetBlock ( int _x, int _y, int _value ) {   BlockVector[_x][_y] = _value;
+    inline void SetBlock ( int _x, int _y, int _value ) {
+                                                            BlockVector[_x][_y] = _value;
                                                             WriteChunkToFile();
                                                         }
 

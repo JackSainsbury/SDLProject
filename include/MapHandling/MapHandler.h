@@ -10,6 +10,7 @@
 #include <vector> //included in VAOPrim but here futureproof in case ofVAO redundancy
 #include <memory> //included in VAOPrim but here futureproof in case ofVAO redundancy
 
+#include "BlockDatabase.h"
 #include "Chunk.h"
 #include "Entity.h"
 
@@ -33,7 +34,7 @@ public:
     void InitMap(bool newWorld, NGLDraw *_mainDrawLoop);
 
     //<Inlines>
-    inline Chunk GetChunk(int _x, int _y){ return *LoadedChunks[_x][_y]; }  //return the chunk from the "loaded chunks" vector at index (x,y)
+    inline Chunk* GetChunk(int _x, int _y){ return &*LoadedChunks[_x][_y]; }  //return the chunk from the "loaded chunks" vector at index (x,y)
     inline int GetChunkVectorDimension(){ return ChunkVectorDimension; }    //return the chunk vector dimension - how many chunks am I buffering
     inline int GetChunkDimension(){ return ChunkDimension; }                //return the dimension of each chunk - how many blocks per chunk in this world
     //</Inlines>
@@ -47,13 +48,15 @@ public:
     //Load the meshes from files to my unordered map, key is ints for ease of comparison to map files
     void LoadMineMeshes();
 
-    void UpdateMapViaPlayerInput();
-
     void DrawMap();//draw my map from the loaded chunks and meshes, apply my global transform also (for inverse of "player movement" - world moves around the player who remains at 0,y?,0)
 
     inline ngl::Transformation* GetTransform(){return &m_transform;}
 
+    //reference to my main draw loop (NGLDraw) get framerate etc
+    NGLDraw* MainDrawLoop;
+
 private:
+    BlockDatabase* m_database;
     std::vector<std::vector<std::unique_ptr<Chunk>>> LoadedChunks;
     void DoCycle(int _dir);
 
@@ -62,8 +65,6 @@ private:
 
     std::string curMapToLoad;
     ngl::Vec2 currentOfsetVector;
-
-    NGLDraw* MainDrawLoop;
 
     std::vector<std::unique_ptr<ngl::Obj>> MineMeshes;
 

@@ -16,9 +16,6 @@ public:
 
     std::unique_ptr<ngl::Obj> m_mesh;
 
-private:
-
-
 };
 
 #endif // GEOMETRY_COMPONENT_H

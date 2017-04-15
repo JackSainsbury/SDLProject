@@ -27,6 +27,8 @@ void Chunk::PopulateChunk(){
             else
                 if(m_map->GetCurrentOfsetVector().m_x > 3 || m_map->GetCurrentOfsetVector().m_x < -3 || m_map->GetCurrentOfsetVector().m_y > 3 || m_map->GetCurrentOfsetVector().m_y < -3)
                     column.push_back(4); //set 4 (chest(rare))
+                else
+                    column.push_back(1);
         }
         BlockVector.push_back(column);
     }
@@ -38,16 +40,16 @@ void Chunk::PopulateChunk(){
 
     WriteChunkToFile();
 }
-
-//Write to file
+//Write to file (purely function during population or when a whole chunk needs writing)
 void Chunk::WriteChunkToFile(){
-    std::ifstream ifs(curFileName);
 
+    std::ifstream ifs(curFileName);
     if(ifs.good()){
         std::ofstream curFile;
         curFile.open (curFileName);
         if(curFile.is_open()){ //little safety net (probably unecessary but not many chunks to check)
             std::string line;
+
             for(int i = 0; i < m_map->GetChunkDimension(); ++i){
                 for(int j = 0; j < m_map->GetChunkDimension(); ++j)
                 {
@@ -57,7 +59,6 @@ void Chunk::WriteChunkToFile(){
                 //write to file
                 line.clear();
             }
-
             curFile.close();
         }
     }
@@ -65,7 +66,6 @@ void Chunk::WriteChunkToFile(){
 
 //Read from file
 void Chunk::ReadChunkFromFile(std::string _fname){
-
     if(BlockVector.empty()){
         for(int i = 0; i < m_map->GetChunkDimension(); ++i){
             std::vector<int> column(m_map->GetChunkDimension(), 0 );

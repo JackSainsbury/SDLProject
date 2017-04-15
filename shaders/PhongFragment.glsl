@@ -36,6 +36,9 @@ in vec3 vPosition;
 
 uniform sampler2D tex;
 in vec2 vertUV;
+uniform vec2 ScreenSizeVector;
+
+const int VignetteWeight = 55;
 
 /// @brief a function to compute point light values
 /// @param[in] _light the number of the current light
@@ -77,7 +80,10 @@ return ambient + diffuse + specular;
 
 void main ()
 {
+    float channel = (gl_FragCoord.x/ScreenSizeVector.x) * (gl_FragCoord.y/ScreenSizeVector.y) * (1 - gl_FragCoord.x/ScreenSizeVector.x) * (1 - gl_FragCoord.y/ScreenSizeVector.y) * VignetteWeight;
 
-fragColour=pointLight() * texture(tex,vertUV);
+    vec4 vignette = vec4(clamp(channel,0,1),clamp(channel,0,1),clamp(channel,0,1),1);//gl_FragCoord.y/ScreenSizeVector.y
+
+    fragColour=pointLight() * texture(tex,vertUV) * vignette;//texture(tex,vertUV);
 }
 

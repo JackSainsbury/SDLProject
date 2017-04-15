@@ -16,6 +16,8 @@ MapHandler::MapHandler(std::string _mapName, int _chunkLoadDimension, int _chunk
         ChunkVectorDimension = 5;   //Default value checks
         ChunkDimension = 16;        //Default value checks
     }
+    //create a new block database, using the curmap to load and hard prefix
+    m_database = new BlockDatabase("BlockDatabase/BlockDatabase.txt");
 }
 
 //one time on start up
@@ -74,6 +76,9 @@ void MapHandler::InitMap(bool newWorld, NGLDraw *_mainDrawLoop){
         }
         m_transform.addPosition(-(float(ChunkDimension-1)/2),0,-(float(ChunkDimension-1)/2));
     }
+
+    //load the database now all directories have been created/opened
+    m_database->loadBlockDatabase();
 }
 
 //This is a filthy switch case; consider refining. "NewRow()" for East & West and "NewCascadeRow()" for North and South (due to the 2d vector set up)
@@ -214,7 +219,7 @@ void MapHandler::CyclePushChunks(MapHandlerCycleSpace::Direction _dir){
     }
 }
 
-//temporart till load all from directory function
+//temporart till load all from directory function (Standardise the asset look paths to /models/blocks, and "ForEach" in directory.
 void MapHandler::LoadMineMeshes(){
     MineMeshes.emplace_back(std::unique_ptr<ngl::Obj>(new ngl::Obj("Assets/models/Dirt.obj","Assets/textures/Dirt.png")));
     MineMeshes.emplace_back(std::unique_ptr<ngl::Obj>(new ngl::Obj("Assets/models/FlatGem.obj","Assets/textures/FlatGem.png")));
@@ -225,35 +230,7 @@ void MapHandler::LoadMineMeshes(){
         MineMeshes[i]->createVAO();
 }
 
-void MapHandler::UpdateMapViaPlayerInput(){
-    Player* _m_player = MainDrawLoop->GetPlayer();//Get values from my player
-
-    //apply the inverse of the current player input vector via his movespeed to my position. (fram independent)
-    m_transform.addPosition(_m_player->GetInputVector().m_x * _m_player->GetPlayerWalkSpeed() * (MainDrawLoop->deltaTimeMiliseconds/1000.0f)
-                            ,0
-                            ,_m_player->GetInputVector().m_y * _m_player->GetPlayerWalkSpeed() * (MainDrawLoop->deltaTimeMiliseconds/1000.0f));
-
-    //CYLCING
-    if(m_transform.getPosition().m_x>0.5){
-        CyclePushChunks(MapHandlerCycleSpace::East);
-        m_transform.setPosition(-(ChunkDimension-0.5),0,m_transform.getPosition().m_z);
-    }else if(m_transform.getPosition().m_x < -(ChunkDimension-0.5)){
-        CyclePushChunks(MapHandlerCycleSpace::West);
-        m_transform.setPosition(0.5,0,m_transform.getPosition().m_z);
-    }
-
-    if(m_transform.getPosition().m_z>0.5){
-        CyclePushChunks(MapHandlerCycleSpace::South);
-        m_transform.setPosition(m_transform.getPosition().m_x,0,-(ChunkDimension-0.5));
-    }else if(m_transform.getPosition().m_z < -(ChunkDimension-0.5)){
-        CyclePushChunks(MapHandlerCycleSpace::North);
-        m_transform.setPosition(m_transform.getPosition().m_x,0,0.5);
-    }
-}
-
 void MapHandler::DrawMap(){
-    UpdateMapViaPlayerInput();
-
     ngl::Transformation trans;//transformation of each block, set by chunk and chunk internal positions
 
     for(int i = 0; i<GetChunkVectorDimension();++i){
@@ -265,8 +242,7 @@ void MapHandler::DrawMap(){
 
                     trans.setPosition((i - (GetChunkVectorDimension())/2)*GetChunkDimension() + chunkBlockX,1,
                                       (j - (GetChunkVectorDimension())/2)*GetChunkDimension() + chunkBlockY);
-
-                    switch(GetChunk(i,j).GetBlock(chunkBlockX,chunkBlockY)){
+                    switch(GetChunk(i,j)->GetBlock(chunkBlockX,chunkBlockY)){
                     case 1:
                         MainDrawLoop->loadMatricesToShader(trans.getMatrix() * m_transform.getMatrix());
                         // draw

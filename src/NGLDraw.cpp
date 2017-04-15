@@ -1,9 +1,11 @@
 #include "NGLDraw.h"
-#include <ngl/ShaderLib.h>
 #include <ngl/NGLInit.h>
 #include <ngl/Material.h>
 #include <ngl/Transformation.h>
 #include <ngl/VAOPrimitives.h>
+#include <ngl/ShaderLib.h>
+
+#include "Input.h"
 
 const static float INCREMENT=0.01;
 const static float ZOOM=0.05;
@@ -47,14 +49,14 @@ NGLDraw::NGLDraw()
     // and make it active ready to load values
     (*shader)["Phong"]->use();
     // the shader will use the currently active material and light0 so set them
-    ngl::Material m(ngl::STDMAT::GOLD);
+    ngl::Material m(ngl::STDMAT::SILVER);
     // load our material values to the shader into the structure material (see Vertex shader)
 
     m.loadToShader("material");
     // Now we will create a basic Camera from the graphics library
     // This is a static camera so it only needs to be set once
     // First create Values for the camera position
-    ngl::Vec3 from(0,2,5);
+    ngl::Vec3 from(0,1,5);
     ngl::Vec3 to(0,0,0);
     ngl::Vec3 up(0,1,0);
 
@@ -71,7 +73,7 @@ NGLDraw::NGLDraw()
     ngl::Mat4 iv=m_cam->getViewMatrix();
     iv.transpose();
 
-    m_light = new ngl::Light(ngl::Vec3(-2,5,2),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT );
+    m_light = new ngl::Light(ngl::Vec3(0,5,1.5),ngl::Colour(.5,.45,.3,1),ngl::Colour(2,1.8,1.4,1),ngl::LightModes::POINTLIGHT );
     m_light->setTransform(iv);
     // load these values to the shader as well
     m_light->loadToShader("light");
@@ -91,6 +93,7 @@ NGLDraw::NGLDraw()
     OnRightPress = false;
     OnLeftPress = false;
 
+    Input *input = new Input();
 }
 
 NGLDraw::~NGLDraw()
@@ -129,7 +132,14 @@ void NGLDraw::draw()
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
     (*shader)["Phong"]->use();
 
+    m_player->ManagePlayerInput();
+
+    m_player->DrawPlayer();
     m_map->DrawMap();
+
+    //temporary - also temp is the .49 (bcos round sometimes pushed  at 7.5)
+    m_map->GetChunk((m_map->GetChunkVectorDimension()-1)/2,(m_map->GetChunkVectorDimension()-1)/2)->SetBlock(-int(m_map->GetTransform()->getPosition().m_x - 0.49),-int(m_map->GetTransform()->getPosition().m_z - 0.49),0);
+
 }
 
 
@@ -173,7 +183,7 @@ void NGLDraw::mouseReleaseEvent (const SDL_MouseButtonEvent &_event)
 //----------------------------------------------------------------------------------------------------------------------
 void NGLDraw::wheelEvent(const SDL_MouseWheelEvent &_event)
 {
-/*
+
     // check the diff of the wheel position (0 means no change)
     if(_event.y > 0)
     {
@@ -196,7 +206,7 @@ void NGLDraw::wheelEvent(const SDL_MouseWheelEvent &_event)
     {
         m_modelPos.m_x+=ZOOM;
     }
-*/
+
 }
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -3,6 +3,8 @@
 #include <iostream>
 #include "NGLDraw.h"
 #include <ngl/NGLInit.h>
+#include <ngl/ShaderLib.h>
+
 
 #include <chrono>
 
@@ -74,9 +76,12 @@ int main(int argc, char * argv[])
     // resize the ngl to set the screen size and camera stuff
     ngl.resize(rect.w,rect.h);
 
+    ngl::ShaderLib *shader=ngl::ShaderLib::instance();
+
     while(!quit)
     {
         auto start = std::chrono::high_resolution_clock::now();
+
 
         while ( SDL_PollEvent(&event) )
         {
@@ -95,6 +100,9 @@ int main(int argc, char * argv[])
                 int w,h;
                 // get the new window size
                 SDL_GetWindowSize(window,&w,&h);
+
+                shader->setShaderParam2f("ScreenSizeVector",w,h);
+
                 ngl.resize(w,h);
                 break;
 
